@@ -14,7 +14,7 @@ class Locators:
     add_user = (By.XPATH, '//span[@data-testid="add-user"]')
     check_mark = (By.XPATH, '//span[@data-testid="checkmark-medium"]')
     confirm = (By.XPATH, '//div[@data-testid="popup-controls-ok"]')
-    search_
+    search_results_CHATS_divider = (By.XPATH, '//div[@class="YGe90 MCwxg"][text() = "Second"]')
     def chat(chat_name: str):
         return (By.XPATH, f"//span[@title='{chat_name}']")
 
@@ -27,14 +27,14 @@ class Whatsapp:
         driver.get("https://web.whatsapp.com")
         self.driver: WebDriver = driver
 
-    def _find_element(self, locator, timeout=5):
+    def _find_elements(self, locator, timeout=5):
         WebDriverWait(self.driver, timeout=timeout).until(
-            lambda driver: self.driver.find_element(*locator))
+            lambda driver: driver.find_element(*locator))
         time.sleep(.5)
-        return self.driver.find_element(*locator)
-    
+        return self.driver.find_elements(*locator)
+
     def _search_for_chat(self, search: str, timeout:int=20):
-        input_box_search = self._find_element(locator=Locators.chat_search, timeout=timeout)
+        input_box_search = self._find_elements(locator=Locators.chat_search, timeout=timeout)[0]
         input_box_search.click()
         input_box_search.clear()
         input_box_search.send_keys(search)
@@ -43,36 +43,32 @@ class Whatsapp:
         self.driver.quit()
     
 
-    def go_to_chat(self, chat_name, chat_phone_number:str = None):
+    def _go_to_chat(self, chat_name, chat_phone_number:str = None):
         '''for the search to work, `chat_phone_number` must be part of the full phone number (+989...)'''
-        # input_box_search = self._find_element(locator=Locators.chat_search, timeout=20)
-        # input_box_search.click()
-        # input_box_search.clear()
-        # input_box_search.send_keys(chat_phone_number or chat_name)
         self._search_for_chat(search=chat_phone_number or chat_name)
-        chat = self.find_element(locator=Locators.chat(chat_name=chat_name))
+        chat = self._find_elements(locator=Locators.chat(chat_name=chat_name))[0]
         chat.click()
         time.sleep(.5)
         return chat
 
-    def send_message_to_chat(self, chat_name, message, chat_phone_number):
-        self.go_to_chat(chat_name=chat_name, chat_phone_number=chat_phone_number)
-        input_box = self.find_element(locator=Locators.input_box)
+    def send_message_to_chat(self, chat_name, message, chat_phone_number: str = None):
+        self._go_to_chat(chat_name=chat_name, chat_phone_number=chat_phone_number)
+        input_box = self._find_elements(locator=Locators.input_box)[0]
         input_box.send_keys(message + Keys.ENTER)
         time.sleep(2)
 
-    def add_to_group(self, group_name, contact_name, contact_phone_number: str):
-        self.go_to_chat(chat_name=group_name)
-        self.find_element(locator=Locators.chat_header).click()
-        self.find_element(locator=Locators.add_user).click()
+    def add_to_group(self, group_name, contact_name, contact_phone_number: str = None):
+        self._go_to_chat(chat_name=group_name)
+        self._find_elements(locator=Locators.chat_header)[0].click()
+        self._find_elements(locator=Locators.add_user)[0].click()
         search_box = self.driver.switch_to.active_element
-        search_box.send_keys(contact_phone_number)
-        self.find_element(locator=Locators.chat(chat_name=contact_name)).click()
+        search_box.send_keys(contact_phone_number or contact_name)
+        self._find_elements(locator=Locators.chat(chat_name=contact_name))[0].click()
         time.sleep(.5)
-        self.find_element(locator=Locators.check_mark).click()
+        self._find_elements(locator=Locators.check_mark)[0].click()
         time.sleep(.5)
-        self.find_element(locator=Locators.confirm).click()
+        self._find_elements(locator=Locators.confirm)[0].click()
         time.sleep(0.5)
 
     def find_all_groups(self, search: str):
-        pass
+        self._search_for_chat()
