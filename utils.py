@@ -5,6 +5,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium import webdriver
+from selenium.common.exceptions import TimeoutException
 
 class Locators:
     chat_search = (By.XPATH, '//div[@data-testid="chat-list-search"]')
@@ -14,7 +15,11 @@ class Locators:
     add_user = (By.XPATH, '//span[@data-testid="add-user"]')
     check_mark = (By.XPATH, '//span[@data-testid="checkmark-medium"]')
     confirm = (By.XPATH, '//div[@data-testid="popup-controls-ok"]')
-    search_results_CHATS_divider = (By.XPATH, '//div[@class="YGe90 MCwxg"][text() = "Second"]')
+    search_results_CHATS_divider = (By.XPATH, '//div[@class="YGe90 MCwxg"][text() = "Chats"]')
+    search_results_MESSAGES_divider = (By.XPATH, '//div[@class="YGe90 MCwxg"][text() = "Messages"]')
+    chat_label = (By.XPATH, '//div[@class="zoWT4"]')
+    use_phone_text = (By.XPATH, '//div[@class="m9hHr"]')
+
     def chat(chat_name: str):
         return (By.XPATH, f"//span[@title='{chat_name}']")
 
@@ -41,7 +46,6 @@ class Whatsapp:
 
     def quit_driver(self):
         self.driver.quit()
-    
 
     def _go_to_chat(self, chat_name, chat_phone_number:str = None):
         '''for the search to work, `chat_phone_number` must be part of the full phone number (+989...)'''
@@ -70,5 +74,29 @@ class Whatsapp:
         self._find_elements(locator=Locators.confirm)[0].click()
         time.sleep(0.5)
 
-    def find_all_groups(self, search: str):
-        self._search_for_chat()
+    def find_all_chats(self, search: str):
+        self._search_for_chat(search=search)
+        use_phone_text_elem = self._find_elements(locator=Locators.use_phone_text)[0]
+        try:
+            chats_divider = self._find_elements(locator=Locators.search_results_CHATS_divider)[0]
+        except TimeoutException:
+            raise Exception(f'Chat with name "{search}" was not found.')
+        elems = []
+        while True:
+            elems += self._find_elements(locator=Locators.chat_label)
+            if use_phone_text_elem.is_displayed():
+                break
+            try:
+                messages_divider = self._find_elements(locator=Locators.search_results_MESSAGES_divider, timeout=1)[0]
+                break
+            except TimeoutException:
+                webdriver.ActionChains(self.driver).scroll_to_element(element=elems[-1]).perform()
+        names = set()
+        for elem in elems:
+            try:
+                name:str = elem.text
+                if search.lower() in name.lower():
+                    names.add(name)
+            except:
+                pass
+        return list(names)
