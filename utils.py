@@ -17,8 +17,8 @@ class Locators:
     confirm = (By.XPATH, '//div[@data-testid="popup-controls-ok"]')
     search_results_CHATS_divider = (By.XPATH, '//div[@class="YGe90 MCwxg"][text() = "Chats"]')
     search_results_MESSAGES_divider = (By.XPATH, '//div[@class="YGe90 MCwxg"][text() = "Messages"]')
+    search_results_CONTACTS_divider = (By.XPATH, '//div[@class="YGe90 MCwxg"][text() = "Contacts"]')
     chat_label = (By.XPATH, '//div[@class="zoWT4"]')
-    use_phone_text = (By.XPATH, '//div[@class="m9hHr"]')
 
     def chat(chat_name: str):
         return (By.XPATH, f"//span[@title='{chat_name}']")
@@ -76,27 +76,29 @@ class Whatsapp:
 
     def find_all_chats(self, search: str):
         self._search_for_chat(search=search)
-        use_phone_text_elem = self._find_elements(locator=Locators.use_phone_text)[0]
         try:
             chats_divider = self._find_elements(locator=Locators.search_results_CHATS_divider)[0]
         except TimeoutException:
             raise Exception(f'Chat with name "{search}" was not found.')
-        elems = []
+        names = set()
+        prev_butt_elem = None
         while True:
-            elems += self._find_elements(locator=Locators.chat_label)
-            if use_phone_text_elem.is_displayed():
+            new_elems = self._find_elements(locator=Locators.chat_label)
+            names.update({elem.text for elem in new_elems if search.lower() in elem.text.lower()})
+            butt_elem = new_elems[0]
+            for elem in new_elems:
+                if elem.location['y'] > butt_elem.location['y']:
+                    butt_elem = elem
+            if prev_butt_elem and prev_butt_elem==butt_elem:
                 break
+            prev_butt_elem = butt_elem
             try:
-                messages_divider = self._find_elements(locator=Locators.search_results_MESSAGES_divider, timeout=1)[0]
+                self._find_elements(locator=Locators.search_results_CONTACTS_divider, timeout=.1)
                 break
             except TimeoutException:
-                webdriver.ActionChains(self.driver).scroll_to_element(element=elems[-1]).perform()
-        names = set()
-        for elem in elems:
-            try:
-                name:str = elem.text
-                if search.lower() in name.lower():
-                    names.add(name)
-            except:
-                pass
+                try:
+                    self._find_elements(locator=Locators.search_results_MESSAGES_divider, timeout=.1)
+                    break
+                except TimeoutException:
+                    webdriver.ActionChains(self.driver).scroll_to_element(butt_elem).perform()
         return list(names)
