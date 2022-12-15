@@ -32,13 +32,13 @@ class Whatsapp:
         driver.get("https://web.whatsapp.com")
         self.driver: WebDriver = driver
 
-    def _find_elements(self, locator, timeout=5):
+    def _find_elements(self, locator, timeout=999):
         WebDriverWait(self.driver, timeout=timeout).until(
             lambda driver: driver.find_element(*locator))
         time.sleep(.5)
         return self.driver.find_elements(*locator)
 
-    def _search_for_chat(self, search: str, timeout:int=20):
+    def _search_for_chat(self, search: str, timeout:int=999):
         input_box_search = self._find_elements(locator=Locators.chat_search, timeout=timeout)[0]
         input_box_search.click()
         input_box_search.clear()
