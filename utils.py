@@ -3,6 +3,7 @@ from typing import Iterable, Tuple
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.actions.wheel_input import ScrollOrigin
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException
@@ -19,6 +20,7 @@ class Locators:
     search_results_MESSAGES_divider = (By.XPATH, '//div[@class="YGe90 MCwxg"][text() = "Messages"]')
     search_results_CONTACTS_divider = (By.XPATH, '//div[@class="YGe90 MCwxg"][text() = "Contacts"]')
     chat_label = (By.XPATH, '//div[@class="zoWT4"]')
+    chat_pane = (By.ID, 'pane-side')
 
     def chat(chat_name: str):
         return (By.XPATH, f"//span[@title='{chat_name}']")
@@ -80,8 +82,12 @@ class Whatsapp:
             chats_divider = self._find_elements(locator=Locators.search_results_CHATS_divider)[0]
         except TimeoutException:
             raise Exception(f'Chat with name "{search}" was not found.')
+        chat_pane = self._find_elements(locator=Locators.chat_pane)[0]
+        scroll_origin = ScrollOrigin(chat_pane, 1, 1)
+        scroll_height = chat_pane.size['height']
         names = set()
         prev_butt_elem = None
+        scroll_tries = 0
         while True:
             new_elems = self._find_elements(locator=Locators.chat_label)
             names.update({elem.text for elem in new_elems if search.lower() in elem.text.lower()})
@@ -90,7 +96,11 @@ class Whatsapp:
                 if elem.location['y'] > butt_elem.location['y']:
                     butt_elem = elem
             if prev_butt_elem and prev_butt_elem==butt_elem:
-                break
+                scroll_tries += 1
+                if scroll_tries==3:
+                    break
+            else:
+                scroll_tries = 0
             prev_butt_elem = butt_elem
             try:
                 self._find_elements(locator=Locators.search_results_CONTACTS_divider, timeout=.1)
@@ -100,5 +110,7 @@ class Whatsapp:
                     self._find_elements(locator=Locators.search_results_MESSAGES_divider, timeout=.1)
                     break
                 except TimeoutException:
-                    webdriver.ActionChains(self.driver).scroll_to_element(butt_elem).perform()
+                    webdriver.ActionChains(self.driver).scroll_from_origin(scroll_origin, 0, scroll_height).perform()                    
+                    time.sleep(.5)
+
         return list(names)
