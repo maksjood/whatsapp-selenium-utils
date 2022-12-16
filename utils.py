@@ -57,10 +57,14 @@ class Whatsapp:
         time.sleep(.5)
         return chat
 
-    def send_message_to_chat(self, chat_name, message, chat_phone_number: str = None):
+    def send_message_to_chat(self, chat_name, message:str, chat_phone_number: str = None):
         self._go_to_chat(chat_name=chat_name, chat_phone_number=chat_phone_number)
         input_box = self._find_elements(locator=Locators.input_box)[0]
-        input_box.send_keys(message + Keys.ENTER)
+        message = message.split('\n')
+        for line in message:
+            input_box.send_keys(line+Keys.ALT+Keys.ENTER)
+        input_box.send_keys(Keys.BACKSPACE)
+        input_box.send_keys(Keys.ENTER)
         time.sleep(2)
 
     def add_to_group(self, group_name, contact_name, contact_phone_number: str = None):
