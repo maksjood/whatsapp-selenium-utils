@@ -1,3 +1,7 @@
+import subprocess
+from enum import Enum
+import os
+import pathlib
 import time
 from typing import Iterable, Tuple
 from selenium.webdriver.support.wait import WebDriverWait
@@ -26,7 +30,8 @@ class Locators:
         return (By.XPATH, f"//span[@title='{chat_name}']")
 
 class Whatsapp:
-    def __init__(self, user_data_path: str):
+    def __init__(self, user_data_path: str, os_type:'OSType'):
+        subprocess.Popen(['copyq'])
         options = webdriver.ChromeOptions()
         options.add_argument(f"--user-data-dir={user_data_path}")
         # options.add_argument("--headless")
@@ -57,13 +62,16 @@ class Whatsapp:
         time.sleep(.5)
         return chat
 
-    def send_message_to_chat(self, chat_name, message:str, chat_phone_number: str = None):
+    def send_message_to_chat(self, chat_name, message:str, chat_phone_number: str = None, image_path: str = None):
         self._go_to_chat(chat_name=chat_name, chat_phone_number=chat_phone_number)
         input_box = self._find_elements(locator=Locators.input_box)[0]
-        message = message.split('\n')
-        for line in message:
-            input_box.send_keys(line+Keys.ALT+Keys.ENTER)
-        input_box.send_keys(Keys.BACKSPACE)
+        copy_text(text=message, os_type=OSType.LINUX)
+        input_box.send_keys(Keys.CONTROL+'v')
+        if image_path:
+            copy_image(image_path, os_type=OSType.LINUX)
+            input_box.send_keys(Keys.CONTROL+'v')
+            time.sleep(1)
+            input_box = self._find_elements(locator=Locators.input_box)[0]
         input_box.send_keys(Keys.ENTER)
         time.sleep(2)
 
@@ -118,3 +126,50 @@ class Whatsapp:
                     time.sleep(.5)
 
         return list(names)
+
+class OSType(Enum):
+    LINUX = 'linux'
+    WINDOWS = 'windows'
+
+def copy_image(path: str, os_type:OSType) -> None:
+    """Copy the Image to Clipboard based on the Platform"""
+
+    _system = os_type.value
+    if _system == "linux":
+        if pathlib.Path(path).suffix in (".PNG", ".png"):
+            _type = 'png'
+        elif pathlib.Path(path).suffix in (".jpg", ".JPG", ".jpeg", ".JPEG"):
+            _type = 'jpeg'
+        else:
+            raise Exception(
+                f"File Format {pathlib.Path(path).suffix} is not Supported!"
+            )
+        os.system(f"copyq copy image/{_type} - < {path}")
+    elif _system == "windows":
+        from io import BytesIO
+
+        import win32clipboard  # pip install pywin32
+        from PIL import Image
+
+        image = Image.open(path)
+        output = BytesIO()
+        image.convert("RGB").save(output, "BMP")
+        data = output.getvalue()[14:]
+        output.close()
+        win32clipboard.OpenClipboard()
+        win32clipboard.EmptyClipboard()
+        win32clipboard.SetClipboardData(win32clipboard.CF_DIB, data)
+        win32clipboard.CloseClipboard()
+    else:
+        raise Exception(f"Unsupported System: {_system}")
+
+
+
+def copy_text(text: str, os_type:OSType) -> None:
+    """Copy a text to Clipboard based on the Platform"""
+
+    _system = os_type.value
+    if _system == "linux":
+        os.system(f'copyq copy "{text}"')
+    else:
+        raise Exception(f"Unsupported System: {_system}")
