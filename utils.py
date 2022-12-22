@@ -1,4 +1,3 @@
-import subprocess
 from enum import Enum
 import os
 import pathlib
@@ -31,7 +30,7 @@ class Locators:
 
 class Whatsapp:
     def __init__(self, user_data_path: str, os_type:'OSType'):
-        subprocess.Popen(['copyq'])
+        self.os_type = os_type
         options = webdriver.ChromeOptions()
         options.add_argument(f"--user-data-dir={user_data_path}")
         # options.add_argument("--headless")
@@ -65,6 +64,9 @@ class Whatsapp:
     def send_message_to_chat(self, chat_name, message:str, chat_phone_number: str = None, image_path: str = None):
         self._go_to_chat(chat_name=chat_name, chat_phone_number=chat_phone_number)
         input_box = self._find_elements(locator=Locators.input_box)[0]
+        if self.os_type==OSType.LINUX:
+            import subprocess
+            subprocess.Popen(['copyq'])
         copy_text(text=message, os_type=OSType.LINUX)
         input_box.send_keys(Keys.CONTROL+'v')
         if image_path:
@@ -134,8 +136,7 @@ class OSType(Enum):
 def copy_image(path: str, os_type:OSType) -> None:
     """Copy the Image to Clipboard based on the Platform"""
 
-    _system = os_type.value
-    if _system == "linux":
+    if os_type==OSType.LINUX:
         if pathlib.Path(path).suffix in (".PNG", ".png"):
             _type = 'png'
         elif pathlib.Path(path).suffix in (".jpg", ".JPG", ".jpeg", ".JPEG"):
@@ -145,7 +146,7 @@ def copy_image(path: str, os_type:OSType) -> None:
                 f"File Format {pathlib.Path(path).suffix} is not Supported!"
             )
         os.system(f"copyq copy image/{_type} - < {path}")
-    elif _system == "windows":
+    elif os_type==OSType.WINDOWS:
         from io import BytesIO
 
         import win32clipboard  # pip install pywin32
@@ -161,7 +162,7 @@ def copy_image(path: str, os_type:OSType) -> None:
         win32clipboard.SetClipboardData(win32clipboard.CF_DIB, data)
         win32clipboard.CloseClipboard()
     else:
-        raise Exception(f"Unsupported System: {_system}")
+        raise Exception(f"Unsupported System: {os_type}")
 
 
 
