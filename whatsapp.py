@@ -12,7 +12,7 @@ text = '''سلام 😎.
 
 چه میکنه جواد'''
 file = os.path.abspath(os_path+'/wapptest.png')
-whatsapp.send_message_to_chat(chat_name='Test', message=text, image_path=file) # TESTED
-# whatsapp.add_to_group(group_name='Test', contact_name='پوریا') # TESTED
+# whatsapp.send_message_to_chat(chat_name='Test', message=text, image_path=file)
+# whatsapp.add_to_group(group_name='Test', contact_name='پوریا', contact_phone_number='+989362190659')
 # names = whatsapp.find_all_chats(search='dovinance')
 whatsapp.quit_driver()
