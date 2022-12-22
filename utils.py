@@ -168,8 +168,13 @@ def copy_image(path: str, os_type:OSType) -> None:
 def copy_text(text: str, os_type:OSType) -> None:
     """Copy a text to Clipboard based on the Platform"""
 
-    _system = os_type.value
-    if _system == "linux":
+    if os_type==OSType.LINUX:
         os.system(f'copyq copy "{text}"')
+    elif os_type==OSType.WINDOWS:
+        import win32clipboard
+        win32clipboard.OpenClipboard()
+        win32clipboard.EmptyClipboard()
+        win32clipboard.SetClipboardText(text, win32clipboard.CF_UNICODETEXT)
+        win32clipboard.CloseClipboard()
     else:
-        raise Exception(f"Unsupported System: {_system}")
+        raise Exception(f"Unsupported System: {os_type}")
