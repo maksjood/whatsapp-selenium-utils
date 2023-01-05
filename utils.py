@@ -24,6 +24,8 @@ class Locators:
     search_results_CONTACTS_divider = (By.XPATH, '//div[@class="YGe90 MCwxg"][text() = "Contacts"]')
     chat_label = (By.XPATH, '//div[@class="zoWT4"]')
     chat_pane = (By.ID, 'pane-side')
+    settings = (By.XPATH, '//span[@data-testid="settings"]')
+    edit_group_admins = (By.XPATH, '//div[@data-testid="edit-group-admins"]')
 
     def chat(chat_name: str):
         return (By.XPATH, f"//span[@title='{chat_name}']")
@@ -89,6 +91,22 @@ class Whatsapp:
         time.sleep(.5)
         self._find_elements(locator=Locators.confirm)[0].click()
         time.sleep(0.5)
+
+    def make_admin_to_group(self, group_name, contact_name, contact_phone_number: str = None):
+        self._go_to_chat(chat_name=group_name)
+        self._find_elements(locator=Locators.chat_header)[0].click()
+        self._find_elements(locator=Locators.settings)[0].click()
+        self._find_elements(locator=Locators.edit_group_admins)[0].click()
+        search_box = self.driver.switch_to.active_element
+        search_box.send_keys(contact_phone_number or contact_name)
+        elems = self._find_elements(locator=Locators.chat(chat_name=contact_name))
+        if len(elems) == 1:
+            elems[0].click()
+            time.sleep(.5)
+        else: # Already admin
+            pass
+        self._find_elements(locator=Locators.check_mark)[0].click()
+        time.sleep(.5)
 
     def find_all_chats(self, search: str):
         self._search_for_chat(search=search)
