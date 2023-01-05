@@ -17,6 +17,7 @@ class Locators:
     input_box = (By.XPATH, '//p[@class="selectable-text copyable-text"]')
     chat_header = (By.XPATH, '//header[@data-testid="conversation-header"]')
     add_user = (By.XPATH, '//span[@data-testid="add-user"]')
+    search_users = (By.XPATH, '//div[@class="mx771qyo gfz4du6o r7fjleex g0rxnol2 lhj4utae le5p0ye3"]')
     check_mark = (By.XPATH, '//span[@data-testid="checkmark-medium"]')
     confirm = (By.XPATH, '//div[@data-testid="popup-controls-ok"]')
     search_results_CHATS_divider = (By.XPATH, '//div[@class="YGe90 MCwxg"][text() = "Chats"]')
@@ -26,6 +27,7 @@ class Locators:
     chat_pane = (By.ID, 'pane-side')
     settings = (By.XPATH, '//span[@data-testid="settings"]')
     edit_group_admins = (By.XPATH, '//div[@data-testid="edit-group-admins"]')
+    remove_from_goup = (By.XPATH, '//li[@data-testid="mi-grp-remove-participant"]')
 
     def chat(chat_name: str):
         return (By.XPATH, f"//span[@title='{chat_name}']")
@@ -40,11 +42,12 @@ class Whatsapp:
         driver.get("https://web.whatsapp.com")
         self.driver: WebDriver = driver
 
-    def _find_elements(self, locator, timeout=999):
+    def _find_elements(self, locator, timeout=999, text_filter: str = ''):
         WebDriverWait(self.driver, timeout=timeout).until(
             lambda driver: driver.find_element(*locator))
         time.sleep(.5)
-        return self.driver.find_elements(*locator)
+        elems = self.driver.find_elements(*locator)
+        return [el for el in elems if text_filter in el.text]
 
     def _search_for_chat(self, search: str, timeout:int=999):
         input_box_search = self._find_elements(locator=Locators.chat_search, timeout=timeout)[0]
@@ -91,6 +94,17 @@ class Whatsapp:
         time.sleep(.5)
         self._find_elements(locator=Locators.confirm)[0].click()
         time.sleep(0.5)
+
+    def remove_from_group(self, group_name, contact_name, contact_phone_number: str = None):
+        self._go_to_chat(chat_name=group_name)
+        self._find_elements(locator=Locators.chat_header)[0].click()
+        self._find_elements(locator=Locators.search_users, text_filter='participants')[0].click()
+        search_box = self.driver.switch_to.active_element
+        search_box.send_keys(contact_phone_number or contact_name)
+        self._find_elements(locator=Locators.chat(chat_name=contact_name))[0].click()
+        time.sleep(.5)
+        self._find_elements(locator=Locators.remove_from_goup)[0].click()
+        time.sleep(.5)
 
     def make_admin_to_group(self, group_name, contact_name, contact_phone_number: str = None):
         self._go_to_chat(chat_name=group_name)
