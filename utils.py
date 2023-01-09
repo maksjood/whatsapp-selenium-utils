@@ -28,9 +28,14 @@ class Locators:
     settings = (By.XPATH, '//span[@data-testid="settings"]')
     edit_group_admins = (By.XPATH, '//div[@data-testid="edit-group-admins"]')
     remove_from_goup = (By.XPATH, '//li[@data-testid="mi-grp-remove-participant"]')
+    unchecked_check_box = (By.XPATH, '//div[@class="g0rxnol2 cm280p3y ppled2lx m62443ks thr4l2wc cd4l02zd m98q8jdg aickbkrb h0ed51ke dntxsmpk ixn6u0rb s2vc4xk1 o0wkt7aw cpfmwfku eliz2k8b"]')
 
     def chat(chat_name: str):
         return (By.XPATH, f"//span[@title='{chat_name}']")
+
+    def contact_check_box(user_phone: str):
+        _phone = user_phone.replace('+', '')
+        return (By.XPATH, f'//div[@data-testid="multi-select-contact-list-item-{_phone}@c.us"]')
 
 class Whatsapp:
     def __init__(self, user_data_path: str, os_type:'OSType'):
@@ -106,16 +111,19 @@ class Whatsapp:
         self._find_elements(locator=Locators.remove_from_goup)[0].click()
         time.sleep(.5)
 
-    def make_admin_to_group(self, group_name, contact_name, contact_phone_number: str = None):
+    def make_admin_to_group(self, group_name, contact_phone_number: str):
+        '''`contact_phone_number` must be complete (with country code)'''
         self._go_to_chat(chat_name=group_name)
         self._find_elements(locator=Locators.chat_header)[0].click()
         self._find_elements(locator=Locators.settings)[0].click()
         self._find_elements(locator=Locators.edit_group_admins)[0].click()
         search_box = self.driver.switch_to.active_element
-        search_box.send_keys(contact_phone_number or contact_name)
-        elems = self._find_elements(locator=Locators.chat(chat_name=contact_name))
-        if len(elems) == 1:
-            elems[0].click()
+        search_box.send_keys(contact_phone_number)
+        check_box = self._find_elements(locator=Locators.contact_check_box(contact_phone_number))
+        if not check_box:
+            raise Exception('contact_phone_number not found')
+        if check_box[0].find_elements(*Locators.unchecked_check_box):
+            webdriver.ActionChains(self.driver).click(check_box[0]).perform()
             time.sleep(.5)
         else: # Already admin
             pass
