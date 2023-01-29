@@ -77,11 +77,11 @@ class Whatsapp:
         if self.os_type==OSType.LINUX:
             import subprocess
             subprocess.Popen(['copyq'])
-        copy_text(text=message, os_type=OSType.LINUX)
+        copy_text(text=message, os_type=self.os_type)
         input_box.send_keys(Keys.CONTROL+'v')
         time.sleep(1)
         if image_path:
-            copy_image(image_path, os_type=OSType.LINUX)
+            copy_image(image_path, os_type=self.os_type)
             input_box.send_keys(Keys.CONTROL+'v')
             time.sleep(1)
             input_box = self._find_elements(locator=Locators.input_box)[0]
