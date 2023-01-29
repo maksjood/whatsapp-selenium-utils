@@ -1,3 +1,6 @@
 chromedata/
 *.pyc
 *.png
+test.py
+test.jpg
+.idea
