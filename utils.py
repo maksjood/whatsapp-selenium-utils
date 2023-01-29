@@ -79,6 +79,7 @@ class Whatsapp:
             subprocess.Popen(['copyq'])
         copy_text(text=message, os_type=OSType.LINUX)
         input_box.send_keys(Keys.CONTROL+'v')
+        time.sleep(1)
         if image_path:
             copy_image(image_path, os_type=OSType.LINUX)
             input_box.send_keys(Keys.CONTROL+'v')
