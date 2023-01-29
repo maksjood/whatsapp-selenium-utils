@@ -14,7 +14,7 @@ from selenium.common.exceptions import TimeoutException
 class Locators:
     chat_search = (By.XPATH, '//div[@data-testid="chat-list-search"]')
     chat_search_close_button = (By.XPATH, '//span[@data-testid="x-alt"]')
-    input_box = (By.XPATH, '//p[@class="selectable-text copyable-text"]')
+    input_box = (By.XPATH, '//p[@class="selectable-text copyable-text iq0m558w"]')
     chat_header = (By.XPATH, '//header[@data-testid="conversation-header"]')
     add_user = (By.XPATH, '//span[@data-testid="add-user"]')
     search_users = (By.XPATH, '//div[@class="mx771qyo gfz4du6o r7fjleex g0rxnol2 lhj4utae le5p0ye3"]')
