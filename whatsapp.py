@@ -16,7 +16,9 @@ whatsapp = Whatsapp(os_path+'/chromedata', os_type=OSType.LINUX)
 # whatsapp.remove_from_group(group_name='Test', contact_name='پوریا', contact_phone_number='+989362190659')
 # whatsapp.add_to_group(group_name='Test', contact_name='پوریا', contact_phone_number='+989362190659')
 # whatsapp.make_admin_to_group(group_name='Test', contact_phone_number='+989362190659')
-text = 'test message'
-whatsapp.send_message_to_chat(chat_name='Test', message=text)
+# text = 'test message'
+# whatsapp.send_message_to_chat(chat_name='Test', message=text)
 # names = whatsapp.find_all_chats(search='dovinance')
+file = os.path.abspath(os_path+'/sticker.webp')
+whatsapp.send_sticker_to_chat(chat_name='Test', image_path=file)
 whatsapp.quit_driver()

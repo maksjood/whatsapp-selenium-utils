@@ -29,6 +29,9 @@ class Locators:
     edit_group_admins = (By.XPATH, '//div[@data-testid="edit-group-admins"]')
     remove_from_goup = (By.XPATH, '//li[@data-testid="mi-grp-remove-participant"]')
     unchecked_check_box = (By.XPATH, '//div[@class="g0rxnol2 cm280p3y ppled2lx m62443ks thr4l2wc cd4l02zd m98q8jdg aickbkrb h0ed51ke dntxsmpk ixn6u0rb s2vc4xk1 o0wkt7aw cpfmwfku eliz2k8b"]')
+    attachment = (By.XPATH, '//span[@data-testid="clip"]')
+    attach_sticker = (By.XPATH, '//*[@id="main"]/footer//*[@data-icon="attach-sticker"]/../input')
+    chat_send_file_button = (By.XPATH, '//span[@data-testid="send"]/..')
 
     def chat(chat_name: str):
         return (By.XPATH, f"//span[@title='{chat_name}']")
@@ -169,6 +172,13 @@ class Whatsapp:
                     time.sleep(.5)
 
         return list(names)
+
+    def send_sticker_to_chat(self, chat_name, chat_phone_number: str = None, image_path: str = None):
+        self._go_to_chat(chat_name=chat_name, chat_phone_number=chat_phone_number)
+        self._find_elements(locator=Locators.attachment, timeout=1)[0].click()
+        self._find_elements(locator=Locators.attach_sticker, timeout=1)[0].send_keys(image_path)
+        self._find_elements(locator=Locators.chat_send_file_button, timeout=5)[0].send_keys(Keys.ENTER)
+        time.sleep(2)
 
 class OSType(Enum):
     LINUX = 'linux'
