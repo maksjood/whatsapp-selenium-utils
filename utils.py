@@ -100,7 +100,7 @@ class Whatsapp:
         self._find_elements(locator=Locators.add_user)[0].click()
         search_box = self.driver.switch_to.active_element
         search_box.send_keys(contact_phone_number or contact_name)
-        
+        self._find_elements(locator=Locators.chat(chat_name=contact_name))[0].click()
         time.sleep(.5)
         try:
             self._find_elements(locator=Locators.check_mark, timeout=.5)[0].click()
