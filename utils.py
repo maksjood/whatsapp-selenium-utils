@@ -62,7 +62,8 @@ class Whatsapp:
     def _search_for_chat(self, search: str, timeout:int=999):
         input_box_search = self._find_elements(locator=Locators.chat_search, timeout=timeout)[0]
         input_box_search.click()
-        input_box_search.clear()
+        # input_box_search.clear()
+        input_box_search.send_keys(Keys.CONTROL + "a" + Keys.DELETE)
         input_box_search.send_keys(search)
 
     def quit_driver(self):
