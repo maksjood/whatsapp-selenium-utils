@@ -20,6 +20,7 @@ class Locators:
     search_users = (By.XPATH, '//div[@class="mx771qyo gfz4du6o r7fjleex g0rxnol2 lhj4utae le5p0ye3"]')
     check_mark = (By.XPATH, '//span[@data-testid="checkmark-medium"]')
     confirm = (By.XPATH, '//div[@data-testid="popup-controls-ok"]')
+    button_confirm = (By.XPATH, '//button[@data-testid="popup-controls-ok"]')
     search_results_CHATS_divider = (By.XPATH, '//div[@data-testid="section-header"][text() = "Chats"]')
     search_results_MESSAGES_divider = (By.XPATH, '//div[@data-testid="section-header"][text() = "Messages"]')
     search_results_CONTACTS_divider = (By.XPATH, '//div[@data-testid="section-header"][text() = "Contacts"]')
@@ -101,7 +102,7 @@ class Whatsapp:
         time.sleep(.5)
         self._find_elements(locator=Locators.check_mark)[0].click()
         time.sleep(.5)
-        self._find_elements(locator=Locators.confirm)[0].click()
+        self._find_elements(locator=Locators.button_confirm)[0].click()
         time.sleep(0.5)
 
     def remove_from_group(self, group_name, contact_name, contact_phone_number: str = None):
