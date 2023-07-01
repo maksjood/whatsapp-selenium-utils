@@ -1,3 +1,3 @@
 selenium==4.5.0
-pywin32 # for windows
-PIL # for windows
+# pywin32 # for windows
+# PIL # for windows

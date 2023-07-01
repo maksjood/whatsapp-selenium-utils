@@ -4,4 +4,4 @@ chromedata/
 test.py
 test.jpg
 .idea
-_venv/
+venv/
