@@ -33,6 +33,7 @@ class Locators:
     attachment = (By.XPATH, '//span[@data-testid="clip"]')
     attach_sticker = (By.XPATH, '//*[@id="main"]/footer//*[@data-icon="attach-sticker"]/../input')
     chat_send_file_button = (By.XPATH, '//span[@data-testid="send"]/..')
+    x_button = (By.XPATH, '//span[@data-testid="x"]/..')
 
     def chat(chat_name: str):
         return (By.XPATH, f"//span[@title='{chat_name}']")
@@ -98,12 +99,15 @@ class Whatsapp:
         self._find_elements(locator=Locators.add_user)[0].click()
         search_box = self.driver.switch_to.active_element
         search_box.send_keys(contact_phone_number or contact_name)
-        self._find_elements(locator=Locators.chat(chat_name=contact_name))[0].click()
+        
         time.sleep(.5)
-        self._find_elements(locator=Locators.check_mark)[0].click()
-        time.sleep(.5)
-        self._find_elements(locator=Locators.button_confirm)[0].click()
-        time.sleep(0.5)
+        try:
+            self._find_elements(locator=Locators.check_mark, timeout=.5)[0].click()
+            time.sleep(.5)
+            self._find_elements(locator=Locators.button_confirm)[0].click()
+            time.sleep(0.5)
+        except TimeoutException: # contact already a member
+            self._find_elements(locator=Locators.x_button)[0].click()
 
     def remove_from_group(self, group_name, contact_name, contact_phone_number: str = None):
         self._go_to_chat(chat_name=group_name)
