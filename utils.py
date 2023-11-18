@@ -8,19 +8,26 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.actions.wheel_input import ScrollOrigin
 from selenium.webdriver.remote.webdriver import WebDriver
+from selenium.webdriver.remote.webelement import WebElement
 from selenium import webdriver
-from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import TimeoutException, ElementClickInterceptedException
+
+LOADING_MESSAGES_TEXT = 'loading messages'
+
+class ElementNotFound(Exception):
+    '''Error class raised when an expected element was not found'''
 
 class Locators:
-    chat_search = (By.XPATH, '//div[@data-testid="chat-list-search"]')
+    chat_search = (By.XPATH, '//div[@title="Search input textbox"]')
     chat_search_close_button = (By.XPATH, '//span[@data-testid="x-alt"]')
     input_box = (By.XPATH, '//div[@data-testid="conversation-compose-box-input"]')
-    chat_header = (By.XPATH, '//header[@data-testid="conversation-header"]')
-    add_user = (By.XPATH, '//span[@data-testid="add-user"]')
+    chat_header = (By.XPATH, '//div[@title="Profile Details"]')
+    add_user = (By.XPATH, '//div[@class="_21S-L"][text() = "Add member"]')
     search_users = (By.XPATH, '//div[@class="mx771qyo gfz4du6o r7fjleex g0rxnol2 lhj4utae le5p0ye3"]')
-    check_mark = (By.XPATH, '//span[@data-testid="checkmark-medium"]')
-    confirm = (By.XPATH, '//div[@data-testid="popup-controls-ok"]')
-    button_confirm = (By.XPATH, '//button[@data-testid="popup-controls-ok"]')
+    check_mark = (By.XPATH, '//input[@type="checkbox"]')
+    
+    button_apply = (By.XPATH, '//span[@aria-label="Confirm"]')
+    confirm_add_member = (By.XPATH, '//*[@id="app"]/div/span[2]/div/span/div/div/div/div/div/div[2]/div/button[2]')
     search_results_CHATS_divider = (By.XPATH, '//div[@data-testid="section-header"][text() = "Chats"]')
     search_results_MESSAGES_divider = (By.XPATH, '//div[@data-testid="section-header"][text() = "Messages"]')
     search_results_CONTACTS_divider = (By.XPATH, '//div[@data-testid="section-header"][text() = "Contacts"]')
@@ -33,7 +40,7 @@ class Locators:
     attachment = (By.XPATH, '//span[@data-testid="clip"]')
     attach_sticker = (By.XPATH, '//*[@id="main"]/footer//*[@data-icon="attach-sticker"]/../input')
     chat_send_file_button = (By.XPATH, '//span[@data-testid="send"]/..')
-    x_button = (By.XPATH, '//span[@data-testid="x"]/..')
+    x_button = (By.XPATH, '//div[@aria-label="Close"]')
 
     def chat(chat_name: str):
         return (By.XPATH, f"//span[@title='{chat_name}']")
@@ -52,12 +59,25 @@ class Whatsapp:
         driver.get("https://web.whatsapp.com")
         self.driver: WebDriver = driver
 
-    def _find_elements(self, locator, timeout=999, text_filter: str = ''):
-        WebDriverWait(self.driver, timeout=timeout).until(
-            lambda driver: driver.find_element(*locator))
-        time.sleep(.5)
-        elems = self.driver.find_elements(*locator)
-        return [el for el in elems if text_filter in el.text]
+    def _find_elements(self,
+                       locator,
+                       base_elem: WebElement = None,
+                       timeout=1,
+                       text_filter: str = ''):
+        while LOADING_MESSAGES_TEXT in self.driver.page_source.lower():
+            time.sleep(2)
+        if base_elem:
+            base = base_elem
+            if locator[0]==By.XPATH and not locator[1].startswith('.'):
+                locator[1] = '.' + locator[1]
+        else:
+            base = self.driver
+        for _ in range(max(2, int(timeout))):
+            elems = [el for el in base.find_elements(*locator) if text_filter in el.text]
+            if elems:
+                return elems
+            time.sleep(1)
+        raise ElementNotFound('elem not found')
 
     def _search_for_chat(self, search: str, timeout:int=999):
         input_box_search = self._find_elements(locator=Locators.chat_search, timeout=timeout)[0]
@@ -72,7 +92,7 @@ class Whatsapp:
     def _go_to_chat(self, chat_name, chat_phone_number:str = None):
         '''for the search to work, `chat_phone_number` must be part of the full phone number (+989...)'''
         self._search_for_chat(search=chat_phone_number or chat_name)
-        chat = self._find_elements(locator=Locators.chat(chat_name=chat_name))[0]
+        chat = self._find_elements(locator=Locators.chat(chat_name=chat_name), timeout=5)[0]
         chat.click()
         time.sleep(.5)
         return chat
@@ -100,15 +120,19 @@ class Whatsapp:
         self._find_elements(locator=Locators.add_user)[0].click()
         search_box = self.driver.switch_to.active_element
         search_box.send_keys(contact_phone_number or contact_name)
-        self._find_elements(locator=Locators.chat(chat_name=contact_name))[0].click()
-        time.sleep(.5)
+
+        contact = self._find_elements(locator=Locators.chat(chat_name=contact_name), timeout=2)[0]
         try:
-            self._find_elements(locator=Locators.check_mark, timeout=.5)[0].click()
-            time.sleep(.5)
-            self._find_elements(locator=Locators.button_confirm)[0].click()
-            time.sleep(0.5)
-        except TimeoutException: # contact already a member
-            self._find_elements(locator=Locators.x_button)[0].click()
+            contact.click()
+        except ElementClickInterceptedException:
+            self._find_elements(locator=Locators.x_button, timeout=1)[0].click()
+            return
+
+        time.sleep(.5)
+        self._find_elements(locator=Locators.button_apply, timeout=1)[0].click()
+        time.sleep(.5)
+        self._find_elements(locator=Locators.confirm_add_member)[0].click()
+        time.sleep(0.5)
 
     def remove_from_group(self, group_name, contact_name, contact_phone_number: str = None):
         self._go_to_chat(chat_name=group_name)
